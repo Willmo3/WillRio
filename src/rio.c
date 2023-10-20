@@ -1,5 +1,11 @@
 #include "../include/rio.h"
 
+/*
+ * Read bytes from buffer until n bytes read or bufsize bytes read.
+ *
+ * Replenish buffer if it's empty.
+ * Return num bytes read.
+ */
 static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n);
 
 ssize_t rio_readn(int fd, void *usrbuf, size_t n) {
@@ -78,12 +84,6 @@ ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen)
 
 // INTERNAL FNS
 
-/*
- * Read bytes from buffer until n bytes read or bufsize bytes read.
- *
- * Replenish buffer if it's empty.
- * Return num bytes read.
- */
 static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n) {
   int cnt;
 
@@ -107,4 +107,21 @@ static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n) {
   rp->rio_bufptr += cnt;
   rp->rio_cnt -= cnt;
   return cnt;
+}
+
+ssize_t rio_readnb(rio_t *rp, void *usrbuf, size_t n) {
+  size_t nleft = n;
+  ssize_t nread;
+  char *bufp = usrbuf;
+
+  while (nleft > 0) {
+    if ((nread = rio_read(rp, bufp, nleft)) < 0)
+      return -1;      // Errno will be set by read
+    else if (nread == 0)
+      break;          // EOF
+
+    nleft -= nread;
+    bufp += nread;
+  }
+  return (n - nleft); // >= 0
 }
