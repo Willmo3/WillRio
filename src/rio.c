@@ -1,5 +1,7 @@
 #include "../include/rio.h"
 
+static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n);
+
 ssize_t rio_readn(int fd, void *usrbuf, size_t n) {
   size_t nleft = n;
   ssize_t nread;
@@ -46,6 +48,32 @@ void rio_readinitb(rio_t *rp, int fd) {
   rp->rio_fd = fd;
   rp->rio_cnt = 0;
   rp->rio_bufptr = rp->rio_buf;
+}
+
+ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen)
+{
+  int n, rc;
+  char c, *bufp = usrbuf;
+
+  for (n = 0; n < maxlen - 1; n++) {
+    // Efficiency here: reading one char at a time from buffer fine.
+    // Since many more than 1 byte are loaded into memory.
+    if ((rc = rio_read(rp, &c, 1)) == 1) {
+      *bufp++ = c;
+      if (c == '\n') {
+        n++;
+        break;
+      }
+    } else if (rc == 0) { // EOF
+      if (n == 0)
+        return 0;         // No data read
+      break;              // Some data read
+    } else
+      return -1;          // Negative num read == error
+  }
+
+  *bufp = '\0';
+  return n;
 }
 
 // INTERNAL FNS
