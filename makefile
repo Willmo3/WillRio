@@ -1,8 +1,10 @@
 CC = gcc
-CFLAGS = -c -g -Wall -o out/rio.o
+SOURCE = src/rio.c
+TARGET = out/rio.o
+CFLAGS = -c -g -Wall -o $(TARGET)
 
-rio.o: src/rio.c
-	$(CC) $(CFLAGS) src/rio.c
+out/rio.o: $(SOURCE)
+	$(CC) $(CFLAGS) $(SOURCE)
 
 clean:
 	$(RM) $(TARGET)
