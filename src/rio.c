@@ -50,6 +50,12 @@ void rio_readinitb(rio_t *rp, int fd) {
 
 // INTERNAL FNS
 
+/*
+ * Read bytes from buffer until n bytes read or bufsize bytes read.
+ *
+ * Replenish buffer if it's empty.
+ * Return num bytes read.
+ */
 static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n) {
   int cnt;
 
@@ -58,11 +64,10 @@ static ssize_t rio_read(rio_t *rp, char *usrbuf, size_t n) {
 
     if (rp->rio_cnt < 0 && errno != EINTR) {
       return -1; // Interrupted by sig handler return
-    }
-    else if (rp->rio_cnt == 0) // EOF
+    } else if (rp->rio_cnt == 0) // EOF
       return 0;
-    else
-      rp->rio_bufptr = rp->rio_buf; // Reset buffer ptr.
+    
+    rp->rio_bufptr = rp->rio_buf; // Reset buffer ptr.
   }
 
   // Copy min(n, rp->rio_cnt) bytes from internal buf to user buf.
